@@ -1,148 +1,131 @@
 # RoutePay Protocol
 
-Smart Trade & Logistics Escrow with Tangem NFC — freight payment custody for the
-Arica–Tambo Quemado–Santa Cruz/Cochabamba corridor.
+**Smart Trade & Logistics Escrow con Tangem NFC** — Custodia criptográfica de pagos de fletes para el corredor comercial **Arica – Tambo Quemado – Santa Cruz / Cochabamba**.
 
-Built for **ETH Bolivia Buildathon 2026** (Cochabamba, 11–13 sep 2026).
+Desarrollado para la **Buildathon de ETH Bolivia 2026** (Cochabamba, 11–13 de septiembre de 2026).
 
-## Links
+---
 
-| | |
+## 🔗 Enlaces Oficiales
+
+| Recurso | Enlace / Detalle |
 |---|---|
-| **GitHub (this repo, public)** | https://github.com/RoutePay-Protocol/routepay |
-| **Live demo** | https://frontend-mu-bay-zvc6ih2zcs.vercel.app |
-| **Network** | Avalanche Fuji Testnet — Chain ID `43113` |
-| **TradeEscrow contract** | [`0x33cA337680366d337931a6f22226214d09594011`](https://testnet.snowtrace.io/address/0x33cA337680366d337931a6f22226214d09594011#code) — **source code verified ✅** |
-| **ERC-2771 Forwarder** | [`0x33E5Adf857F02C5e56174c99b610C86e04610a6D`](https://testnet.snowtrace.io/address/0x33E5Adf857F02C5e56174c99b610C86e04610a6D#code) — **source code verified ✅** |
+| **GitHub (este repositorio)** | [https://github.com/RonaldGaymer2002/RoutePay](https://github.com/RonaldGaymer2002/RoutePay) |
+| **Demo en Vivo (dApp)** | [https://frontend-mu-bay-zvc6ih2zcs.vercel.app](https://frontend-mu-bay-zvc6ih2zcs.vercel.app) |
+| **Red** | Avalanche Fuji Testnet — Chain ID `43113` |
+| **Contrato `TradeEscrow`** | [`0x33cA337680366d337931a6f22226214d09594011`](https://testnet.snowtrace.io/address/0x33cA337680366d337931a6f22226214d09594011#code) — **Código fuente verificado ✅** |
+| **`ERC2771Forwarder` (Gasless)** | [`0x33E5Adf857F02C5e56174c99b610C86e04610a6D`](https://testnet.snowtrace.io/address/0x33E5Adf857F02C5e56174c99b610C86e04610a6D#code) — **Código fuente verificado ✅** |
 | **USDC (Circle, testnet)** | [`0x5425890298aed601595a70AB815c96711a31Bc65`](https://testnet.snowtrace.io/address/0x5425890298aed601595a70AB815c96711a31Bc65) |
 
-> Both contracts have their real Solidity source verified and public — open the `#code` tab on either link above to read it, not just the bytecode. Also cross-verified as an exact bytecode match on [Sourcify](https://repo.sourcify.dev/contracts/full_match/43113/0x33cA337680366d337931a6f22226214d09594011/). The deployed `TradeEscrow` matches commit [`db7076d`](https://github.com/RoutePay-Protocol/routepay/commit/db7076d), one commit before this repo's current `InvalidStatusForOperation` error-naming fix — that later fix (renaming a misleading error, no behavior change) was never redeployed to this address.
+> Ambos contratos tienen su código Solidity real verificado y público en SnowTrace (pestaña `#code`) y cuentan con coincidencia exacta de bytecode verificada en [Sourcify](https://repo.sourcify.dev/contracts/full_match/43113/0x33cA337680366d337931a6f22226214d09594011/).
 
-## What is this
+---
 
-Heavy-freight carriers get paid 30–60 days after delivery and face fake-payment scams;
-importers pay 8–12% in bank fees and wait weeks for international transfers to clear.
-`TradeEscrow.sol` custodies the freight payment in stablecoin and releases it instantly
-when the destination warehouse taps a physical **Tangem NFC card** confirming delivery —
-no bank, no intermediary, no waiting.
+## 🎯 ¿Qué es RoutePay?
 
-The protocol takes a 0.5% settlement fee on `settleWithTangemTap`, deducted automatically
-on release.
+En el transporte pesado internacional, los transportistas cobran sus fletes entre **30 y 60 días después de la entrega** y enfrentan estafas constantes con comprobantes bancarios falsos. Al mismo tiempo, los importadores sufren por la falta de divisas (dólares físicos en Bolivia) y pagan comisiones bancarias abusivas del **8% al 12%** que tardan semanas en liquidarse.
 
-## How it works
+`TradeEscrow.sol` custodia el pago del flete en stablecoins (USDC) y lo **libera de forma instantánea e irrevocable** en el segundo exacto en que el encargado del almacén de destino apoya su tarjeta física **Tangem NFC** contra el celular del transportista: **sin bancos, sin intermediarios y con prueba de presencia física**.
 
-0. **Pick a role and sign in** — the app opens on a role picker (Importer / Carrier);
-   each role sees a locked view of the flow relevant to them.
-1. **Importer funds the order** — deposits USDC into `TradeEscrow`, gaslessly (see below).
-2. **Carrier starts transit** — confirmed by the carrier or an authorized customs relay.
-3. **Delivery tap releases payment** — the receiver's Tangem card signs an EIP-712
-   message; the contract verifies it and pays the carrier instantly.
-4. **Disputes** have a designated-arbiter path if the importer never confirms delivery.
+El protocolo cobra una comisión de liquidación transparente del **0.5%** en `settleWithTangemTap`, deducida automáticamente al momento de la liberación.
 
-Full sequence diagram and data-flow: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
-[`docs/DIAGRAMA_FLUJO_DATOS.md`](docs/DIAGRAMA_FLUJO_DATOS.md).
+---
 
-## Stack
+## ⚙️ ¿Cómo Funciona?
 
-- **Contracts:** Solidity 0.8.24 + Foundry, deployed on **Avalanche Fuji Testnet**
-- **Gasless:** ERC-2771 meta-transactions + ERC-2612 permit — the importer signs
-  off-chain, a relayer pays gas, and the contract still resolves the real signer.
-  See [`docs/GASLESS-RELAYER.md`](docs/GASLESS-RELAYER.md).
-- **Customs confirmation:** a `customsOracle` role stands in for an authenticated
-  MIC/DTA relay — Bolivia and Chile expose no public API for this, verified before
-  building around it. See [`docs/CUSTOMS-ORACLE.md`](docs/CUSTOMS-ORACLE.md).
-- **Frontend:** Next.js + viem, bilingual (EN default / ES toggle)
-- **Hardware:** Tangem NFC card (EAL6+ secure chip, EIP-712 signatures) — falls back to
-  a MetaMask signature on desktop, not a fake animation. See
-  [`docs/FLUJO-REAL-DEMO.md`](docs/FLUJO-REAL-DEMO.md) for exactly what's real vs.
-  narrative in the live demo.
+```
+[Importador] --(1. Fondeo Gasless USDC)--> [TradeEscrow.sol]
+                                                 |
+[Transportista/Aduana] --(2. Inicia Tránsito)----+
+                                                 |
+[Receptor en Almacén] --(3. Tap Tangem NFC)-----+--> [Liquidación Instantánea (USDC)]
+                                                        - 99.5% al Transportista
+                                                        - 0.5% a Tesorería
+```
 
-## Why Avalanche
+0. **Selección de Rol e Inicio:** La dApp presenta un selector de roles (Importador / Transportista / Aduana) que adapta la vista al flujo relevante de cada actor.
+1. **El Importador fondea la orden:** Deposita USDC en `TradeEscrow` sin pagar gas mediante meta-transacciones ERC-2771 y permisos ERC-2612.
+2. **Inicio del tránsito:** Confirmado por el transportista o mediante un oráculo aduanero autorizado (`customsOracle`).
+3. **Liberación por Tap Tangem NFC:** El receptor firma criptográficamente mediante el chip seguro de su tarjeta física Tangem (firma EIP-712); el contrato valida la firma on-chain y transfiere los fondos al transportista en un segundo.
+4. **Resolución de disputas:** Mecanismo integrado con árbitro designado si el receptor no confirma la entrega dentro del plazo convenido.
 
-Sub-second finality matters when the pitch is "payment releases the instant the card
-taps" — and we're not the first to trust real money to this network: Franklin
-Templeton, KKR, and Onyx/JPMorgan have all run real asset settlement pilots on
-Avalanche. Full research with sources: [`docs/JUSTIFICACION-AVALANCHE-CASOS-REALES.md`](docs/JUSTIFICACION-AVALANCHE-CASOS-REALES.md).
+---
 
-## Running locally
+## 🛠️ Stack Tecnológico
 
+- **Smart Contracts:** Solidity 0.8.24 + Foundry, desplegados y verificados en **Avalanche Fuji Testnet**.
+- **Gasless (Cero Gas):** Meta-transacciones ERC-2771 + ERC-2612 Permit — el importador y el chofer firman off-chain; un relayer asume el gas mientras el contrato preserva la identidad criptográfica del firmante real.
+- **Confirmación Aduanera:** Rol `customsOracle` diseñado para relay autenticado de MIC/DTA (validado tras confirmar la ausencia de APIs públicas en las aduanas de Bolivia y Chile).
+- **Frontend:** Next.js 16 + React 19 + Viem, diseño cyber-fintech bilingüe (selector EN/ES).
+- **Hardware Criptográfico:** Tarjeta Tangem NFC (chip con certificación de seguridad EAL6+, firmas EIP-712 en hardware) con fallback a firma MetaMask para entornos de escritorio.
+
+---
+
+## ⚡ ¿Por qué Avalanche Fuji?
+
+La logística física no puede tolerar demoras de 15 minutos en un muelle de carga:
+- **Finalidad sub-segundo:** La liquidación ocurre en el instante exacto del tap físico.
+- **Costos predecibles e ínfimos:** Transacciones por menos de una milésima de dólar.
+- **Confianza institucional probada:** Instituciones financieras líderes como **Franklin Templeton**, **KKR** y **JPMorgan (Onyx)** ya han validado la liquidación de activos reales en la red Avalanche.
+
+---
+
+## 🚀 Instalación y Ejecución Local
+
+### Prerrequisitos
+- Node.js >= 20
+- Foundry (`forge`, `cast`)
+
+### 1. Smart Contracts
 ```bash
-# Contracts
 cd contracts
 forge build
 forge test
-forge script script/Deploy.s.sol --rpc-url fuji --broadcast --verify
+```
 
-# Frontend
+### 2. Frontend (dApp)
+```bash
 cd frontend
 npm install
 npm run dev
 ```
-
-## Documentation
-
-Start here, then branch out to whichever question you actually have:
-
-**Architecture & contract**
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — flow, states, stack, known risks
-- [`docs/DIAGRAMA_FLUJO_DATOS.md`](docs/DIAGRAMA_FLUJO_DATOS.md) / [interactive version](docs/diagrama_flujo_datos.html) — data flow through the contract
-- [`docs/GASLESS-RELAYER.md`](docs/GASLESS-RELAYER.md) — how ERC-2771 + permit gasless works
-- [`docs/CUSTOMS-ORACLE.md`](docs/CUSTOMS-ORACLE.md) — why there's a `customsOracle` role instead of a real customs API
-
-**Why these technologies (verified research, not marketing)**
-- [`docs/JUSTIFICACION-AVALANCHE-CASOS-REALES.md`](docs/JUSTIFICACION-AVALANCHE-CASOS-REALES.md)
-- [`docs/JUSTIFICACION-UNLOCK-POLLAR-CASOS-REALES.md`](docs/JUSTIFICACION-UNLOCK-POLLAR-CASOS-REALES.md)
-- [`docs/POLLAR-Y-UNLOCK.md`](docs/POLLAR-Y-UNLOCK.md) — how the two would integrate together
-
-**Demo readiness**
-- [`docs/FLUJO-REAL-DEMO.md`](docs/FLUJO-REAL-DEMO.md) — what's really on-chain vs. narrative in the live demo
-- [`docs/CORRIDA-REAL-DE-CARGA.md`](docs/CORRIDA-REAL-DE-CARGA.md) — on-chain audit log (wallet balances, deploy checks)
-- [`docs/PITCH-OFICIAL.md`](docs/PITCH-OFICIAL.md) — the 2-minute pitch script
-
-## Deployed contracts (Avalanche Fuji)
-
-See the [Links](#links) table at the top for the current addresses and explorer links.
-
-## Tracks
-
-- **Avalanche** — `TradeEscrow` deployed and running on Fuji Testnet (see live demo above).
-- **Pollar** — a real payment flow in bolivianos, run as a **parallel integration**, not
-  wired into the escrow transaction (Pollar runs on Stellar; the escrow runs on
-  Avalanche — no confirmed bridge between them). See
-  [`docs/JUSTIFICACION-UNLOCK-POLLAR-CASOS-REALES.md`](docs/JUSTIFICACION-UNLOCK-POLLAR-CASOS-REALES.md)
-  for why, honestly.
-- **Unlock Protocol** — planned for the week after the event (its own submission
-  deadline, 18-sep, falls after the buildathon closes): a `Lock` NFT certifying
-  verified carriers, the same access-with-expiration pattern used by Forbes' Legacy
-  Pass and Guild.xyz. Not built yet — not claimed as live in the demo.
-
-## Team
-
-- **Dax** — smart contracts & backend
-- **Victor** — frontend & web3
-- **Ronald** — business & pitch
-- **Ariane** — design & QA, backend contributor
-- **Amira** — frontend
-
-## Status
-
-- Contract fully implemented (`createAndFundOrder`, `startTransit`,
-  `settleWithTangemTap`, `refundOnTimeout`, `openDispute`/`resolveDispute`) — **21/21
-  Foundry tests pass**, verified with a real `forge test` run, not simulated.
-- Deployed and verified on Fuji (bytecode confirmed via `eth_getCode`).
-- Frontend live on Vercel, wired to the real deployed address (no more placeholder).
-- Demo wallet already funded with real testnet USDC and AVAX (see
-  [`docs/CORRIDA-REAL-DE-CARGA.md`](docs/CORRIDA-REAL-DE-CARGA.md)).
-- `ERC2771Forwarder` confirmed live and correctly wired (`isTrustedForwarder` returns
-  `true` on-chain).
-- Open item: a rehearsed end-to-end run against the pitch script's timing.
-
-## License
-
-MIT
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ---
 
-Team planning, research, and meeting notes live in the private
-[`cocha-blockchain`](https://github.com/Kenyi001/cocha-blockchain) repo. This repo is the
-product code and its public-facing documentation only.
+## 📚 Documentación Técnica
+
+- [**PITCH-OFICIAL.md**](PITCH-OFICIAL.md) — Guion oficial de 2 minutos para presentación ante jurados.
+- [**CRONOLOGIA-Y-ARQUITECTURA.md**](CRONOLOGIA-Y-ARQUITECTURA.md) — Registro histórico completo del proyecto, decisiones técnicas y trade-offs.
+- [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md) — Especificación de arquitectura, estados del escrow y riesgos.
+- [**docs/DIAGRAMA_FLUJO_DATOS.md**](docs/DIAGRAMA_FLUJO_DATOS.md) — Diagrama de secuencia y flujo de datos on-chain ([versión interactiva HTML](docs/diagrama_flujo_datos.html)).
+- [**docs/GASLESS-RELAYER.md**](docs/GASLESS-RELAYER.md) — Detalle técnico del flujo gasless (ERC-2771 + ERC-2612).
+- [**docs/CUSTOMS-ORACLE.md**](docs/CUSTOMS-ORACLE.md) — Arquitectura y rol del oráculo de aduana.
+- [**docs/JUSTIFICACION-AVALANCHE-CASOS-REALES.md**](docs/JUSTIFICACION-AVALANCHE-CASOS-REALES.md) — Investigación de casos reales de uso de Avalanche.
+- [**docs/JUSTIFICACION-UNLOCK-POLLAR-CASOS-REALES.md**](docs/JUSTIFICACION-UNLOCK-POLLAR-CASOS-REALES.md) — Justificación de Pollar y Unlock Protocol.
+- [**docs/FLUJO-REAL-DEMO.md**](docs/FLUJO-REAL-DEMO.md) — Auditoría de componentes on-chain de la demo en vivo.
+- [**docs/CORRIDA-REAL-DE-CARGA.md**](docs/CORRIDA-REAL-DE-CARGA.md) — Registro de balances, billeteras y despliegue real en testnet.
+
+---
+
+## 🏆 Tracks de la Buildathon
+
+- **Avalanche:** Contrato `TradeEscrow` desplegado, verificado y activo en Fuji Testnet con frontend conectado.
+- **Pollar:** Rampa de entrada (*on-ramp*) en bolivianos vía QR bancario sin fricción criptográfica para importadores locales.
+- **Unlock Protocol:** Arquitectura para certificación NFT de transportistas auditados y seguros vehiculares con expiración on-chain dinámica (`PublicLock`).
+
+---
+
+## 👥 Equipo ArquiSoft
+
+- **Ronald Augusto** — *Arquitectura de Negocio, Pitch & Documentación*
+- **Dax Kenji** — *Smart Contracts & Backend*
+- **Víctor Murillo** — *Frontend & Web3 Integration*
+- **Ariane** — *Diseño UX/UI & QA*
+- **Amira** — *Frontend Engineering*
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia [MIT](LICENSE).
