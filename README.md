@@ -108,11 +108,28 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ---
 
-## 🏆 Tracks de la Buildathon
+## 🏛️ Sobre el Evento: Ethereum Bolivia Buildathon 2026
 
-- **Avalanche:** Contrato `TradeEscrow` desplegado, verificado y activo en Fuji Testnet con frontend conectado.
-- **Pollar:** Rampa de entrada (*on-ramp*) en bolivianos vía QR bancario sin fricción criptográfica para importadores locales.
-- **Unlock Protocol:** Arquitectura para certificación NFT de transportistas auditados y seguros vehiculares con expiración on-chain dinámica (`PublicLock`).
+**Ethereum Bolivia Buildathon 2026** es la competencia técnica insignia de desarrollo Web3 en Bolivia, orientada a construir infraestructura descentralizada, protocolos financieros abiertos y aplicaciones del mundo real (RWA) sobre el ecosistema EVM.
+
+* **Sede:** Tiquipaya, Cochabamba, Bolivia.
+* **Fechas:** 11 al 13 de septiembre de 2026.
+* **Organizador:** Comunidad Ethereum Bolivia.
+* **Plataforma de postulación:** Devfolio.
+* **Enfoque de la edición:** Desarrollo intensivo de soluciones prácticas con impacto regional directo (mitigación de escasez de divisas, eliminación de comisiones bancarias abusivas, escalabilidad Layer 2 e interoperabilidad transfronteriza).
+
+---
+
+### 🎯 Tracks y Bounties Aplicados por RoutePay Protocol
+
+RoutePay Protocol fue concebido, desarrollado y desplegado durante las 48 horas de hackathon, aplicando a los siguientes tracks oficiales:
+
+| Track / Bounty | Entidad Patrocinadora | Integración Técnica en RoutePay |
+|---|---|---|
+| **Track Avalanche** | Avalanche | Despliegue del contrato principal `TradeEscrow.sol` en Avalanche Fuji C-Chain para liquidación sub-segundo (<1s), costos menores a $0.001 USD y transacciones 100% gasless mediante ERC-2612 y ERC-2771. |
+| **Track Unlock Protocol** | Unlock Protocol | Implementación de credenciales token-gated con contrato `PublicLock` para certificar la vigencia del seguro y habilitación de transportistas con expiración temporal nativa. |
+| **Track Pollar** | Pollar | Flujo de on-ramp fiat en moneda local (BOB) mediante QR Simple bancario nacional, eliminando la barrera de entrada para transportistas e importadores. |
+| **Track General** | Ethereum Bolivia | Evaluación general de arquitectura, completitud de la demo en vivo, unit economics y aplicabilidad en la economía real boliviana. |
 
 ---
 
